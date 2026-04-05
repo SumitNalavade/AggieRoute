@@ -2,10 +2,10 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
-import RestroomFeature from "@/types/RestroomFeature";
+import { RestroomFeatureT } from "@/types";
 
 interface ISelectedRestroomModalProps {
-    restroom: RestroomFeature;
+    restroom: RestroomFeatureT;
     onClose: () => void;
     onDirections?: () => void;
 }

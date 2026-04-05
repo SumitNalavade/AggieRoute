@@ -1,14 +1,15 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 
-import RestroomFeature from "@/types/RestroomFeature";
+import { RestroomFeatureT } from '@/types';
 
 interface IDefaultModalProps {
     loading: boolean
-    markers: RestroomFeature[]
+    markers: RestroomFeatureT[]
+    findNearestRestroom: () => void
 }
 
-const DefaultModal: React.FC<IDefaultModalProps> = ({ loading, markers }) => {
+const DefaultModal: React.FC<IDefaultModalProps> = ({ loading, markers, findNearestRestroom }) => {
     return (
         <View
             style={{
@@ -43,6 +44,7 @@ const DefaultModal: React.FC<IDefaultModalProps> = ({ loading, markers }) => {
                         borderRadius: 12,
                         alignItems: 'center',
                     }}
+                    onPress={findNearestRestroom}
                 >
                     <Text style={{ color: 'white', fontWeight: '600' }}>
                         Find Nearest

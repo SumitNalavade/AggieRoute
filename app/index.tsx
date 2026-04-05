@@ -6,15 +6,17 @@ import * as Location from 'expo-location';
 
 import DefaultModal from '@/components/DefaultModal';
 import SelectedRestroomModal from '@/components/SelectedRestroomModal';
-import RestroomFeature from '@/types/RestroomFeature';
+import { RestroomFeatureT, RegionT } from '@/types';
+
+import { findNearestRestroom } from '@/utils';
 
 export default function HomeScreen() {
-  const [markers, setMarkers] = useState<RestroomFeature[]>([]);
-  const [region, setRegion] = useState<any>(null);
+  const [markers, setMarkers] = useState<RestroomFeatureT[]>([]);
+  const [region, setRegion] = useState<RegionT | null>(null);
 
   const [loading, setLoading] = useState(true);
 
-  const [selectedRestroom, setSelectedRestroom] = useState<null | RestroomFeature>(null);
+  const [selectedRestroom, setSelectedRestroom] = useState<null | RestroomFeatureT>(null);
 
   useEffect(() => {
     const setup = async () => {
@@ -35,7 +37,6 @@ export default function HomeScreen() {
           longitudeDelta: 0.02,
         });
 
-        // 📍 Fetch restroom data
         const res = await fetch(
           'https://gis.tamu.edu/arcgis/rest/services/FCOR/MapInfo_20190529/MapServer/1/query?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=json'
         );
@@ -44,7 +45,7 @@ export default function HomeScreen() {
 
         setMarkers(
           (data.features || []).filter(
-            (f: RestroomFeature) =>
+            (f: RestroomFeatureT) =>
               f?.geometry &&
               typeof f.geometry.x === 'number' &&
               typeof f.geometry.y === 'number'
@@ -59,6 +60,16 @@ export default function HomeScreen() {
 
     setup();
   }, []);
+
+  const onFindNearestLocation = () => {
+    if (!region) {
+      throw new Error("Error finding nearest accessible restroom location");
+    }
+
+    const nearestRestroom = findNearestRestroom(region, markers );
+
+    setSelectedRestroom(nearestRestroom)
+  }
 
   if (!region) {
     return (
@@ -108,9 +119,9 @@ export default function HomeScreen() {
       </MapView>
 
       {selectedRestroom ? (
-        <SelectedRestroomModal restroom={selectedRestroom} onClose={() => { }} />
+        <SelectedRestroomModal restroom={selectedRestroom} onClose={() => setSelectedRestroom(null)} />
       ) : (
-        <DefaultModal loading={loading} markers={markers} />
+        <DefaultModal loading={loading} markers={markers} findNearestRestroom={onFindNearestLocation} />
       )}
 
     </SafeAreaView>

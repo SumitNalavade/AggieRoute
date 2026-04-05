@@ -1,4 +1,6 @@
-type RestroomFeature = {
+export type RegionT = { latitude: number, longitude: number, latitudeDelta: number, longitudeDelta: number }
+
+export type RestroomFeatureT = {
     attributes: {
         OBJECTID: number;
         BldgNum?: string;
@@ -13,5 +15,3 @@ type RestroomFeature = {
         y: number; // latitude
     };
 };
-
-export default RestroomFeature;
