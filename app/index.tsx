@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, SafeAreaView, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 
+import DefaultModal from '@/components/DefaultModal';
+import SelectedRestroomModal from '@/components/SelectedRestroomModal';
 import RestroomFeature from '@/types/RestroomFeature';
 
 export default function HomeScreen() {
@@ -11,6 +13,8 @@ export default function HomeScreen() {
   const [region, setRegion] = useState<any>(null);
 
   const [loading, setLoading] = useState(true);
+
+  const [selectedRestroom, setSelectedRestroom] = useState<null | RestroomFeature>(null);
 
   useEffect(() => {
     const setup = async () => {
@@ -84,6 +88,7 @@ export default function HomeScreen() {
             description={
               feature.attributes.Notes?.replace(/<br\s*\/?>/gi, '\n') || 'No details available'
             }
+            onPress={() => setSelectedRestroom(feature)}
           >
             <View
               style={{
@@ -102,60 +107,12 @@ export default function HomeScreen() {
         ))}
       </MapView>
 
-      <View
-        style={{
-          position: 'absolute',
-          left: 16,
-          right: 16,
-          bottom: 24,
-          backgroundColor: 'white',
-          borderRadius: 20,
-          padding: 20,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 12,
-          elevation: 8,
-        }}
-      >
-        <Text style={{ fontSize: 20, fontWeight: '700', marginBottom: 4 }}>
-          Accessible Restrooms
-        </Text>
+      {selectedRestroom ? (
+        <SelectedRestroomModal restroom={selectedRestroom} onClose={() => { }} />
+      ) : (
+        <DefaultModal loading={loading} markers={markers} />
+      )}
 
-        <Text style={{ fontSize: 14, color: '#666', marginBottom: 16 }}>
-          {loading ? 'Loading...' : `${markers.length} locations`}
-        </Text>
-
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <TouchableOpacity
-            style={{
-              flex: 1,
-              backgroundColor: '#111',
-              paddingVertical: 14,
-              borderRadius: 12,
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ color: 'white', fontWeight: '600' }}>
-              Find Nearest
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={{
-              flex: 1,
-              backgroundColor: '#f2f2f2',
-              paddingVertical: 14,
-              borderRadius: 12,
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ color: '#111', fontWeight: '600' }}>
-              Filter
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
     </SafeAreaView>
   );
 }
