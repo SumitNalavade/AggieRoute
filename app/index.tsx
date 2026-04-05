@@ -1,27 +1,105 @@
-import React from 'react';
-import { SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { MaterialIcons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
+
+import RestroomFeature from '@/types/RestroomFeature';
 
 export default function HomeScreen() {
+  const [markers, setMarkers] = useState<RestroomFeature[]>([]);
+  const [region, setRegion] = useState<any>(null);
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const setup = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+
+        if (status !== 'granted') {
+          console.log('Location permission denied');
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({});
+
+        setRegion({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        });
+
+        // 📍 Fetch restroom data
+        const res = await fetch(
+          'https://gis.tamu.edu/arcgis/rest/services/FCOR/MapInfo_20190529/MapServer/1/query?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=json'
+        );
+
+        const data = await res.json();
+
+        setMarkers(
+          (data.features || []).filter(
+            (f: RestroomFeature) =>
+              f?.geometry &&
+              typeof f.geometry.x === 'number' &&
+              typeof f.geometry.y === 'number'
+          )
+        );
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    setup();
+  }, []);
+
+  if (!region) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator />
+        <Text>Getting your location...</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <MapView
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-        initialRegion={{
-          latitude: 30.6153,
-          longitude: -96.3411,
-          latitudeDelta: 0.02,
-          longitudeDelta: 0.02,
-        }}
+        initialRegion={region}
+        showsUserLocation={true}
+        showsMyLocationButton={true}
       >
-        <Marker
-          coordinate={{
-            latitude: 30.6153,
-            longitude: -96.3411,
-          }}
-          title="Accessible Restroom"
-          description="Closest available restroom"
-        />
+        {markers.map((feature) => (
+          <Marker
+            key={feature.attributes.OBJECTID}
+            coordinate={{
+              latitude: feature.geometry.y,
+              longitude: feature.geometry.x,
+            }}
+            title={feature.attributes.Name || 'Accessible Restroom'}
+            description={
+              feature.attributes.Notes?.replace(/<br\s*\/?>/gi, '\n') || 'No details available'
+            }
+          >
+            <View
+              style={{
+                backgroundColor: 'white',
+                borderRadius: 999,
+                padding: 6,
+                borderWidth: 2,
+                borderColor: '#111',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <MaterialIcons name="accessible" size={12} color="#111" />
+            </View>
+          </Marker>
+        ))}
       </MapView>
 
       <View
@@ -41,11 +119,11 @@ export default function HomeScreen() {
         }}
       >
         <Text style={{ fontSize: 20, fontWeight: '700', marginBottom: 4 }}>
-          Nearest Restroom
+          Accessible Restrooms
         </Text>
 
         <Text style={{ fontSize: 14, color: '#666', marginBottom: 16 }}>
-          Evans Library • 2 min away
+          {loading ? 'Loading...' : `${markers.length} locations`}
         </Text>
 
         <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -59,7 +137,7 @@ export default function HomeScreen() {
             }}
           >
             <Text style={{ color: 'white', fontWeight: '600' }}>
-              Start Route
+              Find Nearest
             </Text>
           </TouchableOpacity>
 
@@ -73,7 +151,7 @@ export default function HomeScreen() {
             }}
           >
             <Text style={{ color: '#111', fontWeight: '600' }}>
-              Details
+              Filter
             </Text>
           </TouchableOpacity>
         </View>
