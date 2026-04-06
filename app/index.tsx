@@ -8,7 +8,7 @@ import DefaultModal from '@/components/DefaultModal';
 import SelectedRestroomModal from '@/components/SelectedRestroomModal';
 import { RestroomFeatureT, RegionT } from '@/types';
 
-import { findNearestRestroom, getDistanceToRestroom } from '@/utils';
+import { findNearestRestroom, getDistanceToRestroom, routeToRestroom } from '@/utils';
 
 export default function HomeScreen() {
   const [markers, setMarkers] = useState<RestroomFeatureT[]>([]);
@@ -131,7 +131,7 @@ export default function HomeScreen() {
       </MapView>
 
       {selectedRestroom ? (
-        <SelectedRestroomModal restroom={selectedRestroom} distance={selectedRestroomDistance} onClose={() => setSelectedRestroom(null)} />
+        <SelectedRestroomModal restroom={selectedRestroom} distance={selectedRestroomDistance} onDirections={routeToRestroom} onClose={() => setSelectedRestroom(null)} />
       ) : (
         <DefaultModal loading={loading} markers={markers} findNearestRestroom={onFindNearestLocation} />
       )}

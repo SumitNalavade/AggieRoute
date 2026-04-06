@@ -1,4 +1,5 @@
 import { RestroomFeatureT } from "@/types";
+import { Linking, Platform } from "react-native";
 
 export const getDistanceToRestroom = (userLocation: { latitude: number; longitude: number }, restroom: RestroomFeatureT): number | null => {
     if (
@@ -56,4 +57,37 @@ export const findNearestRestroom = (userLocation: { latitude: number; longitude:
     }
 
     return nearestRestroom;
+};
+
+export const routeToRestroom = (restroom: RestroomFeatureT) => {
+    if (
+        !restroom?.geometry ||
+        typeof restroom.geometry.x !== "number" ||
+        typeof restroom.geometry.y !== "number"
+    ) {
+        return;
+    }
+
+    const latitude = restroom.geometry.y;
+    const longitude = restroom.geometry.x;
+
+    const rawName =
+        restroom.attributes?.Name?.trim() ||
+        restroom.attributes?.BldgNum?.trim() ||
+        "Accessible Restroom";
+
+    const rawBuildingNumber = restroom.attributes?.BldgNum?.trim();
+
+    const label = rawBuildingNumber && rawBuildingNumber !== rawName
+        ? `${rawName} - ${rawBuildingNumber} Accessible Restroom`
+        : `${rawName} Accessible Restroom`;
+
+    const encodedLabel = encodeURIComponent(label);
+
+    const url =
+        Platform.OS === "ios"
+            ? `http://maps.apple.com/?ll=${latitude},${longitude}&q=${encodedLabel}`
+            : `geo:${latitude},${longitude}?q=${latitude},${longitude}(${encodedLabel})`;
+
+    Linking.openURL(url);
 };

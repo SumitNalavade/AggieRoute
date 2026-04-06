@@ -8,7 +8,7 @@ interface ISelectedRestroomModalProps {
     restroom: RestroomFeatureT;
     distance: number | null;
     onClose: () => void;
-    onDirections?: () => void;
+    onDirections: (restroom: RestroomFeatureT) => any;
 }
 
 const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom, distance, onClose, onDirections }) => {
@@ -80,7 +80,7 @@ const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom
 
             <View style={{ flexDirection: "row", gap: 12 }}>
                 <TouchableOpacity
-                    onPress={onDirections}
+                    onPress={() => onDirections(restroom)}
                     style={{
                         flex: 1,
                         backgroundColor: "#111",
