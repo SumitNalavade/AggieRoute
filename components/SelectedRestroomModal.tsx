@@ -10,16 +10,10 @@ interface ISelectedRestroomModalProps {
     onDirections?: () => void;
 }
 
-const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({
-    restroom,
-    onClose,
-    onDirections,
-}) => {
+const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom, onClose, onDirections }) => {
     const name = restroom.attributes?.Name || "Accessible Restroom";
     const building = restroom.attributes?.BldgNum || "Unknown Building";
-    const notes =
-        restroom.attributes?.Notes?.replace(/<br\s*\/?>/gi, "\n") ||
-        "No additional details available.";
+    const notes = restroom.attributes?.Notes?.replace(/<br\s*\/?>/gi, "\n") || "No additional details available.";
 
     return (
         <View
@@ -69,29 +63,6 @@ const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({
                 >
                     <MaterialIcons name="close" size={20} color="#111" />
                 </TouchableOpacity>
-            </View>
-
-            <View
-                style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginBottom: 12,
-                }}
-            >
-                <View
-                    style={{
-                        backgroundColor: "#2563eb",
-                        borderRadius: 999,
-                        padding: 6,
-                        marginRight: 10,
-                    }}
-                >
-                    <MaterialIcons name="accessible" size={18} color="white" />
-                </View>
-
-                <Text style={{ fontSize: 14, color: "#444", flex: 1 }}>
-                    Accessible restroom location
-                </Text>
             </View>
 
             <Text
