@@ -1,50 +1,64 @@
-# Welcome to your Expo app 👋
+# Accessible Restroom Navigator (Texas A&M)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This project is a mobile application developed for **CSCE 432: Accessible Computing** at Texas A&M University.  
+The app helps users quickly find and navigate to **accessible restrooms** across campus.
 
-## Get started
+## Overview
 
-1. Install dependencies
+The app displays accessible restroom locations on an interactive map, shows the user’s current location, and allows users to navigate to the nearest restroom using walking directions.
 
-   ```bash
-   npm install
-   ```
+This tool is designed to improve accessibility and reduce the time required for users to locate usable restrooms on campus.
 
-2. Start the app
 
-   ```bash
-   npx expo start
-   ```
+<img width="382.5" height="759" alt="Simulator Screenshot - iPhone 15 Pro Max - 2026-04-06 at 11 15 34-portrait" src="https://github.com/user-attachments/assets/7141b2f0-367d-4ea0-bf71-464ad953b01c" />
 
-In the output, you'll find options to open the app in a
+<img width="382.5" height="759" alt="Simulator Screenshot - iPhone 15 Pro Max - 2026-04-06 at 11 15 48-portrait" src="https://github.com/user-attachments/assets/3ad8c627-43d8-4edd-95ac-fc07c9b4217a" />
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Features
 
-## Get a fresh project
+- Interactive campus map
+- Displays accessible restroom locations
+- Shows user’s current location
+- Tap a marker to view restroom details
+- Find nearest restroom
+- Distance displayed in miles
+- Walking directions to selected restroom
+- Opens Apple Maps / Google Maps for navigation
 
-When you're ready, run:
+## Data Source
 
-```bash
-npm run reset-project
-```
+Restroom location data is provided by Texas A&M GIS:
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+https://gis.tamu.edu/arcgis/rest/services/FCOR/MapInfo_20190529/MapServer/1/query
 
-## Learn more
+## User Flow
 
-To learn more about developing your project with Expo, look at the following resources:
+1. User opens the app
+2. Map shows nearby accessible restrooms
+3. User taps a restroom marker
+4. Restroom information modal appears
+5. User taps "Directions"
+6. Walking navigation opens in Maps
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Tech Stack
 
-## Join the community
+- React Native (Expo)
+- Expo Router
+- React Native Maps
+- Expo Location
+- TypeScript
 
-Join our community of developers creating universal apps.
+## Purpose
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+This app was created to support accessibility on campus by helping users:
+
+- Locate wheelchair accessible restrooms
+- Reduce travel time
+- Navigate campus more easily
+- Find appropriate restroom facilities quickly
+
+## Course
+
+CSCE 432 — Accessible Computing  
+Texas A&M University
