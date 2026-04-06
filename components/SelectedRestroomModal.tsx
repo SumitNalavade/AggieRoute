@@ -6,13 +6,13 @@ import { RestroomFeatureT } from "@/types";
 
 interface ISelectedRestroomModalProps {
     restroom: RestroomFeatureT;
+    distance: number | null;
     onClose: () => void;
     onDirections?: () => void;
 }
 
-const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom, onClose, onDirections }) => {
+const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom, distance, onClose, onDirections }) => {
     const name = restroom.attributes?.Name || "Accessible Restroom";
-    const building = restroom.attributes?.BldgNum || "Unknown Building";
     const notes = restroom.attributes?.Notes?.replace(/<br\s*\/?>/gi, "\n") || "No additional details available.";
 
     return (
@@ -45,9 +45,11 @@ const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom
                         {name}
                     </Text>
 
-                    <Text style={{ fontSize: 14, color: "#666" }}>
-                        {building}
-                    </Text>
+                    {distance && (
+                        <Text style={{ fontSize: 14, color: "#666" }}>
+                            { distance.toFixed(2) } mi away
+                        </Text>
+                    )}
                 </View>
 
                 <TouchableOpacity

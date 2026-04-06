@@ -8,7 +8,7 @@ import DefaultModal from '@/components/DefaultModal';
 import SelectedRestroomModal from '@/components/SelectedRestroomModal';
 import { RestroomFeatureT, RegionT } from '@/types';
 
-import { findNearestRestroom } from '@/utils';
+import { findNearestRestroom, getDistanceToRestroom } from '@/utils';
 
 export default function HomeScreen() {
   const [markers, setMarkers] = useState<RestroomFeatureT[]>([]);
@@ -17,6 +17,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
 
   const [selectedRestroom, setSelectedRestroom] = useState<null | RestroomFeatureT>(null);
+  const [selectedRestroomDistance, setSelectedRestroomDistance] = useState<number | null>(null);
 
   useEffect(() => {
     const setup = async () => {
@@ -61,14 +62,25 @@ export default function HomeScreen() {
     setup();
   }, []);
 
+  useEffect(() => {
+    if(!region || !selectedRestroom) return;
+
+    const selectedRestroomDistance = getDistanceToRestroom(region, selectedRestroom)
+    setSelectedRestroomDistance(selectedRestroomDistance)
+  }, [selectedRestroom])
+
   const onFindNearestLocation = () => {
     if (!region) {
       throw new Error("Error finding nearest accessible restroom location");
     }
 
     const nearestRestroom = findNearestRestroom(region, markers );
-
-    setSelectedRestroom(nearestRestroom)
+  
+    if(!nearestRestroom) {
+      return null;
+    }
+    
+    setSelectedRestroom(nearestRestroom);
   }
 
   if (!region) {
@@ -119,7 +131,7 @@ export default function HomeScreen() {
       </MapView>
 
       {selectedRestroom ? (
-        <SelectedRestroomModal restroom={selectedRestroom} onClose={() => setSelectedRestroom(null)} />
+        <SelectedRestroomModal restroom={selectedRestroom} distance={selectedRestroomDistance} onClose={() => setSelectedRestroom(null)} />
       ) : (
         <DefaultModal loading={loading} markers={markers} findNearestRestroom={onFindNearestLocation} />
       )}

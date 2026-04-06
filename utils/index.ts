@@ -1,53 +1,49 @@
-import RestroomFeatureT from "@/types/RestroomFeature";
+import { RestroomFeatureT } from "@/types";
+
+export const getDistanceToRestroom = (userLocation: { latitude: number; longitude: number }, restroom: RestroomFeatureT): number | null => {
+    if (
+        !userLocation ||
+        !restroom?.geometry ||
+        typeof restroom.geometry.x !== "number" ||
+        typeof restroom.geometry.y !== "number"
+    ) {
+        return null;
+    }
+
+    const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+
+    const earthRadiusMeters = 6371000;
+
+    const dLat = toRadians(restroom.geometry.y - userLocation.latitude);
+    const dLon = toRadians(restroom.geometry.x - userLocation.longitude);
+
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRadians(userLocation.latitude)) *
+        Math.cos(toRadians(restroom.geometry.y)) *
+        Math.sin(dLon / 2) ** 2;
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    const distanceMeters = earthRadiusMeters * c;
+
+    const miles = distanceMeters * 0.000621371;
+
+    return miles;
+};
 
 export const findNearestRestroom = (userLocation: { latitude: number; longitude: number }, markers: RestroomFeatureT[]): RestroomFeatureT | null => {
     if (!userLocation || markers.length === 0) {
         return null;
     }
 
-    const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
-
-    const getDistanceInMeters = (
-        lat1: number,
-        lon1: number,
-        lat2: number,
-        lon2: number
-    ) => {
-        const earthRadius = 6371000;
-
-        const dLat = toRadians(lat2 - lat1);
-        const dLon = toRadians(lon2 - lon1);
-
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRadians(lat1)) *
-            Math.cos(toRadians(lat2)) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
-
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        return earthRadius * c;
-    };
-
     let nearestRestroom: RestroomFeatureT | null = null;
     let shortestDistance = Infinity;
 
     for (const marker of markers) {
-        if (
-            !marker?.geometry ||
-            typeof marker.geometry.x !== 'number' ||
-            typeof marker.geometry.y !== 'number'
-        ) {
-            continue;
-        }
+        const distance = getDistanceToRestroom(userLocation, marker);
 
-        const distance = getDistanceInMeters(
-            userLocation.latitude,
-            userLocation.longitude,
-            marker.geometry.y,
-            marker.geometry.x
-        );
+        if (distance === null) continue;
 
         if (distance < shortestDistance) {
             shortestDistance = distance;
@@ -55,6 +51,9 @@ export const findNearestRestroom = (userLocation: { latitude: number; longitude:
         }
     }
 
-    return nearestRestroom;
+    if (!nearestRestroom) {
+        return null;
+    }
 
+    return nearestRestroom;
 };
