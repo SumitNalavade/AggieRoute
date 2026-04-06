@@ -93,21 +93,6 @@ const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom
                         Directions
                     </Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity
-                    onPress={onClose}
-                    style={{
-                        flex: 1,
-                        backgroundColor: "#f2f2f2",
-                        paddingVertical: 14,
-                        borderRadius: 12,
-                        alignItems: "center",
-                    }}
-                >
-                    <Text style={{ color: "#111", fontWeight: "600" }}>
-                        Back
-                    </Text>
-                </TouchableOpacity>
             </View>
         </View>
     );

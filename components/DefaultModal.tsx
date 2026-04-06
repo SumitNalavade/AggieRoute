@@ -50,20 +50,6 @@ const DefaultModal: React.FC<IDefaultModalProps> = ({ loading, markers, findNear
                         Find Nearest
                     </Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={{
-                        flex: 1,
-                        backgroundColor: '#f2f2f2',
-                        paddingVertical: 14,
-                        borderRadius: 12,
-                        alignItems: 'center',
-                    }}
-                >
-                    <Text style={{ color: '#111', fontWeight: '600' }}>
-                        Filter
-                    </Text>
-                </TouchableOpacity>
             </View>
         </View>
     )
