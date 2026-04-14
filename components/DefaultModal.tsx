@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 
 import { RestroomFeatureT } from '@/types';
+import { COLORS } from '@/utils/colors';
 
 interface IDefaultModalProps {
     loading: boolean
@@ -31,7 +32,7 @@ const DefaultModal: React.FC<IDefaultModalProps> = ({ loading, markers, findNear
                 Accessible Restrooms
             </Text>
 
-            <Text style={{ fontSize: 14, color: '#666', marginBottom: 16 }}>
+            <Text style={{ fontSize: 14, color: COLORS.darkGray, marginBottom: 16 }}>
                 {loading ? 'Loading...' : `${markers.length} locations`}
             </Text>
 
@@ -39,14 +40,14 @@ const DefaultModal: React.FC<IDefaultModalProps> = ({ loading, markers, findNear
                 <TouchableOpacity
                     style={{
                         flex: 1,
-                        backgroundColor: '#111',
+                        backgroundColor: COLORS.black,
                         paddingVertical: 14,
                         borderRadius: 12,
                         alignItems: 'center',
                     }}
                     onPress={findNearestRestroom}
                 >
-                    <Text style={{ color: 'white', fontWeight: '600' }}>
+                    <Text style={{ color: COLORS.white, fontWeight: '600' }}>
                         Find Nearest
                     </Text>
                 </TouchableOpacity>

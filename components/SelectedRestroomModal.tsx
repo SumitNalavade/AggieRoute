@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 import { RestroomFeatureT } from "@/types";
+import { COLORS } from "@/utils/colors";
 
 interface ISelectedRestroomModalProps {
     restroom: RestroomFeatureT;
@@ -22,10 +23,10 @@ const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom
                 left: 16,
                 right: 16,
                 bottom: 24,
-                backgroundColor: "white",
+                backgroundColor: COLORS.white,
                 borderRadius: 20,
                 padding: 20,
-                shadowColor: "#000",
+                shadowColor: COLORS.shadowDark,
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.15,
                 shadowRadius: 12,
@@ -46,7 +47,7 @@ const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom
                     </Text>
 
                     {distance && (
-                        <Text style={{ fontSize: 14, color: "#666" }}>
+                        <Text style={{ fontSize: 14, color: COLORS.darkGray }}>
                             { distance.toFixed(2) } mi away
                         </Text>
                     )}
@@ -58,19 +59,19 @@ const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom
                         width: 36,
                         height: 36,
                         borderRadius: 18,
-                        backgroundColor: "#f2f2f2",
+                        backgroundColor: COLORS.lightGray,
                         alignItems: "center",
                         justifyContent: "center",
                     }}
                 >
-                    <MaterialIcons name="close" size={20} color="#111" />
+                    <MaterialIcons name="close" size={20} color={COLORS.black} />
                 </TouchableOpacity>
             </View>
 
             <Text
                 style={{
                     fontSize: 14,
-                    color: "#666",
+                    color: COLORS.darkGray,
                     marginBottom: 16,
                     lineHeight: 20,
                 }}
@@ -83,13 +84,13 @@ const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom
                     onPress={() => onDirections(restroom)}
                     style={{
                         flex: 1,
-                        backgroundColor: "#111",
+                        backgroundColor: COLORS.black,
                         paddingVertical: 14,
                         borderRadius: 12,
                         alignItems: "center",
                     }}
                 >
-                    <Text style={{ color: "white", fontWeight: "600" }}>
+                    <Text style={{ color: COLORS.white, fontWeight: "600" }}>
                         Directions
                     </Text>
                 </TouchableOpacity>
