@@ -59,6 +59,17 @@ export const findNearestRestroom = (userLocation: { latitude: number; longitude:
     return nearestRestroom;
 };
 
+export const findNearestN = (
+    location: { latitude: number; longitude: number },
+    markers: RestroomFeatureT[],
+    n: number
+): { restroom: RestroomFeatureT; distance: number }[] => {
+    return markers
+        .map((m) => ({ restroom: m, distance: getDistanceToRestroom(location, m) ?? Infinity }))
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, n);
+};
+
 export const routeToRestroom = (restroom: RestroomFeatureT) => {
     if (
         !restroom?.geometry ||
