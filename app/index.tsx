@@ -3,12 +3,15 @@ import { ActivityIndicator, SafeAreaView, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import DefaultModal from '@/components/DefaultModal';
 import SelectedRestroomModal from '@/components/SelectedRestroomModal';
 import { RestroomFeatureT, RegionT } from '@/types';
 
 import { findNearestRestroom, getDistanceToRestroom, routeToRestroom } from '@/utils';
+
+const FAVORITES_KEY = 'favoriteRestrooms';
 
 export default function HomeScreen() {
   const [markers, setMarkers] = useState<RestroomFeatureT[]>([]);
@@ -18,6 +21,28 @@ export default function HomeScreen() {
 
   const [selectedRestroom, setSelectedRestroom] = useState<null | RestroomFeatureT>(null);
   const [selectedRestroomDistance, setSelectedRestroomDistance] = useState<number | null>(null);
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
+
+  useEffect(() => {
+    AsyncStorage.getItem(FAVORITES_KEY).then((stored) => {
+      if (stored) setFavoriteIds(JSON.parse(stored));
+    });
+  }, []);
+
+  const toggleFavorite = async (restroom: RestroomFeatureT) => {
+    const id = restroom.attributes.OBJECTID;
+    const updated = favoriteIds.includes(id)
+      ? favoriteIds.filter((fid) => fid !== id)
+      : [...favoriteIds, id];
+    setFavoriteIds(updated);
+    await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
+  };
+
+  const reorderFavorites = async (reordered: RestroomFeatureT[]) => {
+    const updated = reordered.map((r) => r.attributes.OBJECTID);
+    setFavoriteIds(updated);
+    await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
+  };
 
   useEffect(() => {
     const setup = async () => {
@@ -131,9 +156,23 @@ export default function HomeScreen() {
       </MapView>
 
       {selectedRestroom ? (
-        <SelectedRestroomModal restroom={selectedRestroom} distance={selectedRestroomDistance} onDirections={routeToRestroom} onClose={() => setSelectedRestroom(null)} />
+        <SelectedRestroomModal
+          restroom={selectedRestroom}
+          distance={selectedRestroomDistance}
+          onDirections={routeToRestroom}
+          onClose={() => setSelectedRestroom(null)}
+          isFavorite={favoriteIds.includes(selectedRestroom.attributes.OBJECTID)}
+          onToggleFavorite={() => toggleFavorite(selectedRestroom)}
+        />
       ) : (
-        <DefaultModal loading={loading} markers={markers} findNearestRestroom={onFindNearestLocation} />
+        <DefaultModal
+          loading={loading}
+          markers={markers}
+          findNearestRestroom={onFindNearestLocation}
+          favorites={favoriteIds.map((id) => markers.find((m) => m.attributes.OBJECTID === id)).filter(Boolean) as RestroomFeatureT[]}
+          onSelectFavorite={setSelectedRestroom}
+          onReorderFavorites={reorderFavorites}
+        />
       )}
 
     </SafeAreaView>

@@ -1,5 +1,8 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { RestroomFeatureT } from '@/types';
 import { COLORS } from '@/utils/colors';
@@ -8,9 +11,38 @@ interface IDefaultModalProps {
     loading: boolean
     markers: RestroomFeatureT[]
     findNearestRestroom: () => void
+    favorites: RestroomFeatureT[]
+    onSelectFavorite: (restroom: RestroomFeatureT) => void
+    onReorderFavorites: (reordered: RestroomFeatureT[]) => void
 }
 
-const DefaultModal: React.FC<IDefaultModalProps> = ({ loading, markers, findNearestRestroom }) => {
+const DefaultModal: React.FC<IDefaultModalProps> = ({ loading, markers, findNearestRestroom, favorites, onSelectFavorite, onReorderFavorites }) => {
+    const renderFavoriteItem = ({ item, drag, isActive }: RenderItemParams<RestroomFeatureT>) => (
+        <ScaleDecorator>
+            <TouchableOpacity
+                onPress={() => !isActive && onSelectFavorite(item)}
+                onLongPress={drag}
+                delayLongPress={150}
+                style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: 8,
+                    borderBottomWidth: 1,
+                    borderBottomColor: COLORS.lightGray,
+                    gap: 8,
+                    backgroundColor: isActive ? COLORS.lightGray : 'transparent',
+                    borderRadius: isActive ? 8 : 0,
+                }}
+            >
+                <MaterialIcons name="favorite" size={16} color="#E53935" />
+                <Text style={{ fontSize: 14, flex: 1 }} numberOfLines={1}>
+                    {item.attributes.Name ?? 'Accessible Restroom'}
+                </Text>
+                <MaterialIcons name="chevron-right" size={18} color={COLORS.darkGray} />
+            </TouchableOpacity>
+        </ScaleDecorator>
+    );
+
     return (
         <View
             style={{
@@ -35,6 +67,23 @@ const DefaultModal: React.FC<IDefaultModalProps> = ({ loading, markers, findNear
             <Text style={{ fontSize: 14, color: COLORS.darkGray, marginBottom: 16 }}>
                 {loading ? 'Loading...' : `${markers.length} locations`}
             </Text>
+
+            {favorites.length > 0 && (
+                <View style={{ marginBottom: 16 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>
+                        Favorites
+                    </Text>
+                    <GestureHandlerRootView>
+                        <DraggableFlatList
+                            data={favorites}
+                            keyExtractor={(item) => String(item.attributes.OBJECTID)}
+                            renderItem={renderFavoriteItem}
+                            onDragEnd={({ data }) => onReorderFavorites(data)}
+                            style={{ maxHeight: 120 }}
+                        />
+                    </GestureHandlerRootView>
+                </View>
+            )}
 
             <View style={{ flexDirection: 'row', gap: 12 }}>
                 <TouchableOpacity
