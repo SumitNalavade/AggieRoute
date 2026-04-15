@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 import { RestroomFeatureT } from "@/types";
-import { COLORS } from "@/utils/colors";
+import { COLORS } from "@/utils/constants";
 
 interface IPinResultsModalProps {
     results: { restroom: RestroomFeatureT; distance: number }[];
