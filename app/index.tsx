@@ -11,7 +11,10 @@ import PinResultsModal from '@/components/PinResultsModal';
 import { RestroomFeatureT, RegionT } from '@/types';
 
 import { useDroppedPin } from "@/hooks/useDroppedPin";
+import { useAsyncStorage } from '@/hooks/useAsyncStorage';
+
 import { findNearestRestroom, getDistanceToRestroom, routeToRestroom } from '@/utils';
+import { FAVORITES_KEY } from '@/utils/constants';
 
 export default function HomeScreen() {
   const [markers, setMarkers] = useState<RestroomFeatureT[]>([]);
@@ -22,6 +25,23 @@ export default function HomeScreen() {
   const [selectedRestroomDistance, setSelectedRestroomDistance] = useState<number | null>(null);
 
   const pinDrop = useDroppedPin(markers, () => setSelectedRestroom(null));
+  const { value: favoriteIds, setValue: setFavoriteIds } = useAsyncStorage<number[]>(FAVORITES_KEY, []);
+
+
+  const toggleFavorite = (restroom: RestroomFeatureT) => {
+    const id = restroom.attributes.OBJECTID;
+
+    const updated = favoriteIds.includes(id)
+      ? favoriteIds.filter((fid) => fid !== id)
+      : [...favoriteIds, id];
+
+    setFavoriteIds(updated);
+  };
+
+  const reorderFavorites = (reordered: RestroomFeatureT[]) => {
+    const updated = reordered.map((r) => r.attributes.OBJECTID);
+    setFavoriteIds(updated);
+  };
 
   useEffect(() => {
     const setup = async () => {
@@ -183,6 +203,8 @@ export default function HomeScreen() {
           distance={selectedRestroomDistance}
           onDirections={routeToRestroom}
           onClose={() => setSelectedRestroom(null)}
+          isFavorite={favoriteIds.includes(selectedRestroom.attributes.OBJECTID)}
+          onToggleFavorite={() => toggleFavorite(selectedRestroom)}
         />
       ) : pinDrop.droppedPin && pinDrop.showPinModal ? (
         <PinResultsModal
@@ -195,6 +217,11 @@ export default function HomeScreen() {
           loading={loading}
           markers={markers}
           findNearestRestroom={onFindNearestLocation}
+          favorites={favoriteIds
+            .map((id) => markers.find((m) => m.attributes.OBJECTID === id))
+            .filter(Boolean) as RestroomFeatureT[]}
+          onSelectFavorite={setSelectedRestroom}
+          onReorderFavorites={reorderFavorites}
         />
       )}
     </SafeAreaView>

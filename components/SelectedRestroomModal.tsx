@@ -3,16 +3,18 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 import { RestroomFeatureT } from "@/types";
-import { COLORS } from "@/utils/colors";
+import { COLORS } from "@/utils/constants";
 
 interface ISelectedRestroomModalProps {
     restroom: RestroomFeatureT;
     distance: number | null;
     onClose: () => void;
     onDirections: (restroom: RestroomFeatureT) => any;
+    isFavorite: boolean;
+    onToggleFavorite: () => void;
 }
 
-const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom, distance, onClose, onDirections }) => {
+const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom, distance, onClose, onDirections, isFavorite, onToggleFavorite }) => {
     const name = restroom.attributes?.Name || "Accessible Restroom";
     const notes = restroom.attributes?.Notes?.replace(/<br\s*\/?>/gi, "\n") || "No additional details available.";
 
@@ -53,19 +55,39 @@ const SelectedRestroomModal: React.FC<ISelectedRestroomModalProps> = ({ restroom
                     )}
                 </View>
 
-                <TouchableOpacity
-                    onPress={onClose}
-                    style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 18,
-                        backgroundColor: COLORS.lightGray,
-                        alignItems: "center",
-                        justifyContent: "center",
-                    }}
-                >
-                    <MaterialIcons name="close" size={20} color={COLORS.black} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                    <TouchableOpacity
+                        onPress={onToggleFavorite}
+                        style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 18,
+                            backgroundColor: COLORS.lightGray,
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <MaterialIcons
+                            name={isFavorite ? "favorite" : "favorite-border"}
+                            size={20}
+                            color={isFavorite ? "#E53935" : COLORS.black}
+                        />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        onPress={onClose}
+                        style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 18,
+                            backgroundColor: COLORS.lightGray,
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <MaterialIcons name="close" size={20} color={COLORS.black} />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <Text
