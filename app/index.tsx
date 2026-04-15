@@ -1,26 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker } from 'react-native-maps';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 
 import DefaultModal from '@/components/DefaultModal';
 import SelectedRestroomModal from '@/components/SelectedRestroomModal';
+import PinResultsModal from '@/components/PinResultsModal';
 import { RestroomFeatureT, RegionT } from '@/types';
 
+import { useDroppedPin } from "@/hooks/useDroppedPin";
 import { useAsyncStorage } from '@/hooks/useAsyncStorage';
+
 import { findNearestRestroom, getDistanceToRestroom, routeToRestroom } from '@/utils';
 import { FAVORITES_KEY } from '@/utils/constants';
 
 export default function HomeScreen() {
   const [markers, setMarkers] = useState<RestroomFeatureT[]>([]);
   const [region, setRegion] = useState<RegionT | null>(null);
-
   const [loading, setLoading] = useState(true);
 
-  const [selectedRestroom, setSelectedRestroom] = useState<null | RestroomFeatureT>(null);
+  const [selectedRestroom, setSelectedRestroom] = useState<RestroomFeatureT | null>(null);
   const [selectedRestroomDistance, setSelectedRestroomDistance] = useState<number | null>(null);
 
+  const pinDrop = useDroppedPin(markers, () => setSelectedRestroom(null));
   const { value: favoriteIds, setValue: setFavoriteIds } = useAsyncStorage<number[]>(FAVORITES_KEY, []);
 
 
@@ -85,13 +89,13 @@ export default function HomeScreen() {
   useEffect(() => {
     if (!region || !selectedRestroom) return;
 
-    const selectedRestroomDistance = getDistanceToRestroom(region, selectedRestroom)
-    setSelectedRestroomDistance(selectedRestroomDistance)
-  }, [selectedRestroom, region])
+    const distance = getDistanceToRestroom(region, selectedRestroom);
+    setSelectedRestroomDistance(distance);
+  }, [region, selectedRestroom]);
 
   const onFindNearestLocation = () => {
     if (!region) {
-      throw new Error("Error finding nearest accessible restroom location");
+      throw new Error('Error finding nearest accessible restroom location');
     }
 
     const nearestRestroom = findNearestRestroom(region, markers);
@@ -101,7 +105,7 @@ export default function HomeScreen() {
     }
 
     setSelectedRestroom(nearestRestroom);
-  }
+  };
 
   if (!region) {
     return (
@@ -119,35 +123,78 @@ export default function HomeScreen() {
         initialRegion={region}
         showsUserLocation={true}
         showsMyLocationButton={true}
+        onRegionChange={pinDrop.onRegionChange}
+        onRegionChangeComplete={pinDrop.onRegionChangeComplete}
+        onLongPress={pinDrop.onMapLongPress}
       >
-        {markers.map((feature) => (
+        {pinDrop.droppedPin && (
           <Marker
-            key={feature.attributes.OBJECTID}
-            coordinate={{
-              latitude: feature.geometry.y,
-              longitude: feature.geometry.x,
-            }}
-            title={feature.attributes.Name || 'Accessible Restroom'}
-            description={
-              feature.attributes.Notes?.replace(/<br\s*\/?>/gi, '\n') || 'No details available'
-            }
-            onPress={() => setSelectedRestroom(feature)}
-          >
-            <View
-              style={{
-                backgroundColor: 'white',
-                borderRadius: 999,
-                padding: 6,
-                borderWidth: 2,
-                borderColor: '#111',
-                alignItems: 'center',
-                justifyContent: 'center',
+            key={`pin-${pinDrop.droppedPin.latitude}-${pinDrop.droppedPin.longitude}`}
+            coordinate={pinDrop.droppedPin}
+            pinColor="#E53935"
+          />
+        )}
+
+        {markers.map((feature) => {
+          const pinRank = pinDrop.pinResults.findIndex(
+            (r) => r.restroom.attributes.OBJECTID === feature.attributes.OBJECTID
+          );
+          const isTopThree = pinRank !== -1;
+
+          return (
+            <Marker
+              key={feature.attributes.OBJECTID}
+              coordinate={{
+                latitude: feature.geometry.y,
+                longitude: feature.geometry.x,
               }}
+              title={feature.attributes.Name || 'Accessible Restroom'}
+              description={
+                feature.attributes.Notes?.replace(/<br\s*\/?>/gi, '\n') || 'No details available'
+              }
+              onPress={() => setSelectedRestroom(feature)}
+              tracksViewChanges={pinDrop.pinResults.length > 0}
             >
-              <MaterialIcons name="accessible" size={12} color="#111" />
-            </View>
-          </Marker>
-        ))}
+              {isTopThree ? (
+                <View
+                  style={{
+                    backgroundColor: '#1A73E8',
+                    borderRadius: 999,
+                    width: 28,
+                    height: 28,
+                    borderWidth: 2,
+                    borderColor: 'white',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 3,
+                    elevation: 4,
+                  }}
+                >
+                  <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>
+                    {pinRank + 1}
+                  </Text>
+                </View>
+              ) : (
+                <View
+                  style={{
+                    backgroundColor: 'white',
+                    borderRadius: 999,
+                    padding: 6,
+                    borderWidth: 2,
+                    borderColor: '#111',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <MaterialIcons name="accessible" size={12} color="#111" />
+                </View>
+              )}
+            </Marker>
+          );
+        })}
       </MapView>
 
       {selectedRestroom ? (
@@ -159,17 +206,24 @@ export default function HomeScreen() {
           isFavorite={favoriteIds.includes(selectedRestroom.attributes.OBJECTID)}
           onToggleFavorite={() => toggleFavorite(selectedRestroom)}
         />
+      ) : pinDrop.droppedPin && pinDrop.showPinModal ? (
+        <PinResultsModal
+          results={pinDrop.pinResults}
+          onSelect={setSelectedRestroom}
+          onClose={pinDrop.clearPin}
+        />
       ) : (
         <DefaultModal
           loading={loading}
           markers={markers}
           findNearestRestroom={onFindNearestLocation}
-          favorites={favoriteIds.map((id) => markers.find((m) => m.attributes.OBJECTID === id)).filter(Boolean) as RestroomFeatureT[]}
+          favorites={favoriteIds
+            .map((id) => markers.find((m) => m.attributes.OBJECTID === id))
+            .filter(Boolean) as RestroomFeatureT[]}
           onSelectFavorite={setSelectedRestroom}
           onReorderFavorites={reorderFavorites}
         />
       )}
-
     </SafeAreaView>
   );
 }
