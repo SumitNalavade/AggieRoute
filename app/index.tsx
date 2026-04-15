@@ -8,7 +8,9 @@ import DefaultModal from '@/components/DefaultModal';
 import SelectedRestroomModal from '@/components/SelectedRestroomModal';
 import { RestroomFeatureT, RegionT } from '@/types';
 
+import { useAsyncStorage } from '@/hooks/useAsyncStorage';
 import { findNearestRestroom, getDistanceToRestroom, routeToRestroom } from '@/utils';
+import { FAVORITES_KEY } from '@/utils/constants';
 
 export default function HomeScreen() {
   const [markers, setMarkers] = useState<RestroomFeatureT[]>([]);
@@ -18,6 +20,24 @@ export default function HomeScreen() {
 
   const [selectedRestroom, setSelectedRestroom] = useState<null | RestroomFeatureT>(null);
   const [selectedRestroomDistance, setSelectedRestroomDistance] = useState<number | null>(null);
+
+  const { value: favoriteIds, setValue: setFavoriteIds } = useAsyncStorage<number[]>(FAVORITES_KEY, []);
+
+
+  const toggleFavorite = (restroom: RestroomFeatureT) => {
+    const id = restroom.attributes.OBJECTID;
+
+    const updated = favoriteIds.includes(id)
+      ? favoriteIds.filter((fid) => fid !== id)
+      : [...favoriteIds, id];
+
+    setFavoriteIds(updated);
+  };
+
+  const reorderFavorites = (reordered: RestroomFeatureT[]) => {
+    const updated = reordered.map((r) => r.attributes.OBJECTID);
+    setFavoriteIds(updated);
+  };
 
   useEffect(() => {
     const setup = async () => {
@@ -63,23 +83,23 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    if(!region || !selectedRestroom) return;
+    if (!region || !selectedRestroom) return;
 
     const selectedRestroomDistance = getDistanceToRestroom(region, selectedRestroom)
     setSelectedRestroomDistance(selectedRestroomDistance)
-  }, [selectedRestroom])
+  }, [selectedRestroom, region])
 
   const onFindNearestLocation = () => {
     if (!region) {
       throw new Error("Error finding nearest accessible restroom location");
     }
 
-    const nearestRestroom = findNearestRestroom(region, markers );
-  
-    if(!nearestRestroom) {
+    const nearestRestroom = findNearestRestroom(region, markers);
+
+    if (!nearestRestroom) {
       return null;
     }
-    
+
     setSelectedRestroom(nearestRestroom);
   }
 
@@ -131,9 +151,23 @@ export default function HomeScreen() {
       </MapView>
 
       {selectedRestroom ? (
-        <SelectedRestroomModal restroom={selectedRestroom} distance={selectedRestroomDistance} onDirections={routeToRestroom} onClose={() => setSelectedRestroom(null)} />
+        <SelectedRestroomModal
+          restroom={selectedRestroom}
+          distance={selectedRestroomDistance}
+          onDirections={routeToRestroom}
+          onClose={() => setSelectedRestroom(null)}
+          isFavorite={favoriteIds.includes(selectedRestroom.attributes.OBJECTID)}
+          onToggleFavorite={() => toggleFavorite(selectedRestroom)}
+        />
       ) : (
-        <DefaultModal loading={loading} markers={markers} findNearestRestroom={onFindNearestLocation} />
+        <DefaultModal
+          loading={loading}
+          markers={markers}
+          findNearestRestroom={onFindNearestLocation}
+          favorites={favoriteIds.map((id) => markers.find((m) => m.attributes.OBJECTID === id)).filter(Boolean) as RestroomFeatureT[]}
+          onSelectFavorite={setSelectedRestroom}
+          onReorderFavorites={reorderFavorites}
+        />
       )}
 
     </SafeAreaView>
