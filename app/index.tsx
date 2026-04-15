@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker } from 'react-native-maps';
@@ -10,21 +10,18 @@ import SelectedRestroomModal from '@/components/SelectedRestroomModal';
 import PinResultsModal from '@/components/PinResultsModal';
 import { RestroomFeatureT, RegionT } from '@/types';
 
-import { findNearestRestroom, findNearestN, getDistanceToRestroom, routeToRestroom } from '@/utils';
+import { useDroppedPin } from "@/hooks/useDroppedPin";
+import { findNearestRestroom, getDistanceToRestroom, routeToRestroom } from '@/utils';
 
 export default function HomeScreen() {
   const [markers, setMarkers] = useState<RestroomFeatureT[]>([]);
   const [region, setRegion] = useState<RegionT | null>(null);
-
   const [loading, setLoading] = useState(true);
 
-  const [selectedRestroom, setSelectedRestroom] = useState<null | RestroomFeatureT>(null);
+  const [selectedRestroom, setSelectedRestroom] = useState<RestroomFeatureT | null>(null);
   const [selectedRestroomDistance, setSelectedRestroomDistance] = useState<number | null>(null);
-  const [droppedPin, setDroppedPin] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [pinResults, setPinResults] = useState<{ restroom: RestroomFeatureT; distance: number }[]>([]);
-  const [showPinModal, setShowPinModal] = useState(false);
-  const pinModalTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isMapMoving = useRef(false);
+
+  const pinDrop = useDroppedPin(markers, () => setSelectedRestroom(null));
 
   useEffect(() => {
     const setup = async () => {
@@ -70,47 +67,25 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    if(!region || !selectedRestroom) return;
+    if (!region || !selectedRestroom) return;
 
-    const selectedRestroomDistance = getDistanceToRestroom(region, selectedRestroom)
-    setSelectedRestroomDistance(selectedRestroomDistance)
-  }, [selectedRestroom])
-
-  const dropPin = (coord: { latitude: number; longitude: number }) => {
-    if (pinModalTimeout.current) clearTimeout(pinModalTimeout.current);
-    setShowPinModal(false);
-    setDroppedPin(coord);
-    setPinResults(findNearestN(coord, markers, 3));
-    setSelectedRestroom(null);
-    // Delay the modal so the native map has time to render the pin first
-    pinModalTimeout.current = setTimeout(() => setShowPinModal(true), 400);
-  };
-
-  const onMapLongPress = (e: { nativeEvent: { coordinate: { latitude: number; longitude: number } } }) => {
-    if (isMapMoving.current) return;
-    dropPin(e.nativeEvent.coordinate);
-  };
-
-  const clearPin = () => {
-    if (pinModalTimeout.current) clearTimeout(pinModalTimeout.current);
-    setDroppedPin(null);
-    setPinResults([]);
-    setShowPinModal(false);
-  };
+    const distance = getDistanceToRestroom(region, selectedRestroom);
+    setSelectedRestroomDistance(distance);
+  }, [region, selectedRestroom]);
 
   const onFindNearestLocation = () => {
     if (!region) {
-      throw new Error("Error finding nearest accessible restroom location");
+      throw new Error('Error finding nearest accessible restroom location');
     }
 
-    const nearestRestroom = findNearestRestroom(region, markers );
-  
-    if(!nearestRestroom) {
+    const nearestRestroom = findNearestRestroom(region, markers);
+
+    if (!nearestRestroom) {
       return null;
     }
-    
+
     setSelectedRestroom(nearestRestroom);
-  }
+  };
 
   if (!region) {
     return (
@@ -124,25 +99,24 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <MapView
-
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
         initialRegion={region}
         showsUserLocation={true}
         showsMyLocationButton={true}
-        onRegionChange={() => { isMapMoving.current = true; }}
-        onRegionChangeComplete={() => { isMapMoving.current = false; }}
-        onLongPress={onMapLongPress}
+        onRegionChange={pinDrop.onRegionChange}
+        onRegionChangeComplete={pinDrop.onRegionChangeComplete}
+        onLongPress={pinDrop.onMapLongPress}
       >
-        {droppedPin && (
+        {pinDrop.droppedPin && (
           <Marker
-            key={`pin-${droppedPin.latitude}-${droppedPin.longitude}`}
-            coordinate={droppedPin}
+            key={`pin-${pinDrop.droppedPin.latitude}-${pinDrop.droppedPin.longitude}`}
+            coordinate={pinDrop.droppedPin}
             pinColor="#E53935"
           />
         )}
 
         {markers.map((feature) => {
-          const pinRank = pinResults.findIndex(
+          const pinRank = pinDrop.pinResults.findIndex(
             (r) => r.restroom.attributes.OBJECTID === feature.attributes.OBJECTID
           );
           const isTopThree = pinRank !== -1;
@@ -159,7 +133,7 @@ export default function HomeScreen() {
                 feature.attributes.Notes?.replace(/<br\s*\/?>/gi, '\n') || 'No details available'
               }
               onPress={() => setSelectedRestroom(feature)}
-              tracksViewChanges={pinResults.length > 0}
+              tracksViewChanges={pinDrop.pinResults.length > 0}
             >
               {isTopThree ? (
                 <View
@@ -204,13 +178,25 @@ export default function HomeScreen() {
       </MapView>
 
       {selectedRestroom ? (
-        <SelectedRestroomModal restroom={selectedRestroom} distance={selectedRestroomDistance} onDirections={routeToRestroom} onClose={() => setSelectedRestroom(null)} />
-      ) : droppedPin && showPinModal ? (
-        <PinResultsModal results={pinResults} onSelect={setSelectedRestroom} onClose={clearPin} />
+        <SelectedRestroomModal
+          restroom={selectedRestroom}
+          distance={selectedRestroomDistance}
+          onDirections={routeToRestroom}
+          onClose={() => setSelectedRestroom(null)}
+        />
+      ) : pinDrop.droppedPin && pinDrop.showPinModal ? (
+        <PinResultsModal
+          results={pinDrop.pinResults}
+          onSelect={setSelectedRestroom}
+          onClose={pinDrop.clearPin}
+        />
       ) : (
-        <DefaultModal loading={loading} markers={markers} findNearestRestroom={onFindNearestLocation} />
+        <DefaultModal
+          loading={loading}
+          markers={markers}
+          findNearestRestroom={onFindNearestLocation}
+        />
       )}
-
     </SafeAreaView>
   );
 }
