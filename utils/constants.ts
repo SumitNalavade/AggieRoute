@@ -11,3 +11,5 @@ export const COLORS = {
   // Shadows
   shadowDark: '#000',
 } as const;
+
+export const FAVORITES_KEY = 'favoriteRestrooms';

@@ -3,15 +3,14 @@ import { ActivityIndicator, SafeAreaView, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import DefaultModal from '@/components/DefaultModal';
 import SelectedRestroomModal from '@/components/SelectedRestroomModal';
 import { RestroomFeatureT, RegionT } from '@/types';
 
+import { useAsyncStorage } from '@/hooks/useAsyncStorage';
 import { findNearestRestroom, getDistanceToRestroom, routeToRestroom } from '@/utils';
-
-const FAVORITES_KEY = 'favoriteRestrooms';
+import { FAVORITES_KEY } from '@/utils/constants';
 
 export default function HomeScreen() {
   const [markers, setMarkers] = useState<RestroomFeatureT[]>([]);
@@ -21,27 +20,23 @@ export default function HomeScreen() {
 
   const [selectedRestroom, setSelectedRestroom] = useState<null | RestroomFeatureT>(null);
   const [selectedRestroomDistance, setSelectedRestroomDistance] = useState<number | null>(null);
-  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
 
-  useEffect(() => {
-    AsyncStorage.getItem(FAVORITES_KEY).then((stored) => {
-      if (stored) setFavoriteIds(JSON.parse(stored));
-    });
-  }, []);
+  const { value: favoriteIds, setValue: setFavoriteIds } = useAsyncStorage<number[]>(FAVORITES_KEY, []);
 
-  const toggleFavorite = async (restroom: RestroomFeatureT) => {
+
+  const toggleFavorite = (restroom: RestroomFeatureT) => {
     const id = restroom.attributes.OBJECTID;
+
     const updated = favoriteIds.includes(id)
       ? favoriteIds.filter((fid) => fid !== id)
       : [...favoriteIds, id];
+
     setFavoriteIds(updated);
-    await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
   };
 
-  const reorderFavorites = async (reordered: RestroomFeatureT[]) => {
+  const reorderFavorites = (reordered: RestroomFeatureT[]) => {
     const updated = reordered.map((r) => r.attributes.OBJECTID);
     setFavoriteIds(updated);
-    await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
   };
 
   useEffect(() => {
@@ -88,23 +83,23 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    if(!region || !selectedRestroom) return;
+    if (!region || !selectedRestroom) return;
 
     const selectedRestroomDistance = getDistanceToRestroom(region, selectedRestroom)
     setSelectedRestroomDistance(selectedRestroomDistance)
-  }, [selectedRestroom])
+  }, [selectedRestroom, region])
 
   const onFindNearestLocation = () => {
     if (!region) {
       throw new Error("Error finding nearest accessible restroom location");
     }
 
-    const nearestRestroom = findNearestRestroom(region, markers );
-  
-    if(!nearestRestroom) {
+    const nearestRestroom = findNearestRestroom(region, markers);
+
+    if (!nearestRestroom) {
       return null;
     }
-    
+
     setSelectedRestroom(nearestRestroom);
   }
 

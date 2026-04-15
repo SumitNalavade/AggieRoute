@@ -8,7 +8,7 @@ import DraggableFlatList, {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { RestroomFeatureT } from "@/types";
-import { COLORS } from "@/utils/colors";
+import { COLORS } from "@/utils/constants";
 
 interface IDefaultModalProps {
     loading: boolean;
